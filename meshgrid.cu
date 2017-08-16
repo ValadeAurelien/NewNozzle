@@ -52,12 +52,42 @@ void cuda_operator_divided(cell_t* B, cell_t* A, data_t f, int size_i, int size_
   B[j*size_i+i] = A[j*size_i+i] / f;
 }
 
+struct dev_meshgrid_t
+{
+  int size_i, size_j;
+  cell_t* d_data;
+
+  __device__ 
+  const cell_t& cdat(int i, int j) const
+  {
+    if (i<size_i && j<size_j)
+      return d_data[j*size_i+i];
+    else 
+    {
+      printf("out of range : %d %d\n", i, j);
+      return d_data[0];
+    }
+  }
+  __device__ 
+  cell_t& dat(int i, int j) 
+  {
+    if (i<size_i && j<size_j)
+      return d_data[j*size_i+i];
+    else 
+    {
+      printf("out of range : %d %d\n", i, j);
+      return d_data[0];
+    }
+  }
+};
+
 struct meshgrid_t
 {
   int size_i, size_j;
   dim3 gridsize, blocksize;
-  cell_t* h_data, *d_data;
-  bool is_on_device=false;
+  cell_t *h_data = NULL, 
+         *d_data = NULL;
+  dev_meshgrid_t *d_m;
 
   __host__  
   meshgrid_t() {}
@@ -67,8 +97,6 @@ struct meshgrid_t
   ~meshgrid_t();
   __host__  
   void from_meshgrid_prop(const meshgrid_t& m); 
-  __host__  
-  meshgrid_t* meshgrid_to_device(); 
 
   __host__
   meshgrid_t operator+(const meshgrid_t& m) const;
@@ -90,10 +118,6 @@ struct meshgrid_t
   const cell_t& cat(int i, int j) const;
   __host__ 
   cell_t& at(int i, int j) ;
-  __host__ __device__ 
-  const cell_t& cdat(int i, int j) const;
-  __host__ __device__ 
-  cell_t& dat(int i, int j) ;
 };
 
 __host__  
@@ -102,16 +126,22 @@ meshgrid_t::meshgrid_t(int _size_i, int _size_j, dim3 _gridsize, dim3 _blocksize
 {
   cudaMalloc(&d_data, sizeof(cell_t)*size_i*size_j);
   if (!d_data) printf("could not allocate device memory");
+
+  dev_meshgrid_t tmp;
+  tmp.size_i = size_i;
+  tmp.size_j = size_j;
+  tmp.d_data = d_data;
+  cudaMalloc(&d_m, sizeof(dev_meshgrid_t));
+  if (!d_m) printf("could not allocate device memory");
+  cudaMemcpy(d_m, &tmp, sizeof(dev_meshgrid_t), cudaMemcpyHostToDevice);
 }
 
 __host__ 
 meshgrid_t::~meshgrid_t()
 {
-  if (!is_on_device) 
-  {
-    cudaFree(&d_data);
-//    if (h_data!=NULL) free(h_data);
-  }
+  cudaFree(d_data);
+  cudaFree(d_m);
+  if (h_data) free(h_data);
 }
 
 __host__  
@@ -122,18 +152,15 @@ void meshgrid_t::from_meshgrid_prop(const meshgrid_t& m)
   gridsize = m.gridsize;
   blocksize = m.blocksize;
   if (!d_data) cudaMalloc(&d_data, sizeof(cell_t)*size_i*size_j);
-}
+  if (!d_data) printf("could not allocate device memory");
 
-__host__
-meshgrid_t* meshgrid_t::meshgrid_to_device()
-{
-  meshgrid_t* cpy;
-  cudaMalloc(&cpy, sizeof(meshgrid_t));
-  is_on_device = true;
-  cudaMemcpy(cpy, this, sizeof(meshgrid_t), cudaMemcpyHostToDevice);
-  if (!cpy) printf("could not allocate device memory");
-  is_on_device = false;
-  return cpy;
+  dev_meshgrid_t tmp;
+  tmp.size_i = size_i;
+  tmp.size_j = size_j;
+  tmp.d_data = d_data;
+  if (!d_m) cudaMalloc(&d_m, sizeof(dev_meshgrid_t));
+  if (!d_m) printf("could not allocate device memory");
+  cudaMemcpy(d_m, &tmp, sizeof(dev_meshgrid_t), cudaMemcpyHostToDevice);
 }
 
 __host__
@@ -187,7 +214,7 @@ bool meshgrid_t::equivalent(const meshgrid_t& m) const
 __host__ 
 void meshgrid_t::data_to_host()
 {
-  h_data = (cell_t*) malloc(sizeof(cell_t)*size_i*size_j);
+  if (!h_data) h_data = (cell_t*) malloc(sizeof(cell_t)*size_i*size_j); 
   cudaMemcpy(h_data, d_data, sizeof(cell_t)*size_i*size_j, cudaMemcpyDeviceToHost); 
 }
 
@@ -198,7 +225,7 @@ const cell_t& meshgrid_t::cat(int i, int j) const
     return h_data[j*size_i+i];
   else 
   {
-    printf("out of range");
+    printf("out of range : %d %d\n", i, j);
     return h_data[0];
   }
 }
@@ -210,31 +237,8 @@ cell_t& meshgrid_t::at(int i, int j)
     return h_data[j*size_i+i];
   else 
   {
-    printf("out of range");
+    printf("out of range : %d %d\n", i, j);
     return h_data[0];
   }
 }
 
-__host__ __device__ 
-const cell_t& meshgrid_t::cdat(int i, int j) const
-{
-  if (i<size_i && j<size_j)
-    return d_data[j*size_i+i];
-  else 
-  {
-    printf("out of range");
-    return d_data[0];
-  }
-}
-
-__host__ __device__ 
-cell_t& meshgrid_t::dat(int i, int j) 
-{
-  if (i<size_i && j<size_j)
-    return d_data[j*size_i+i];
-  else 
-  {
-    printf("out of range");
-    return d_data[0];
-  }
-}

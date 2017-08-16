@@ -7,10 +7,12 @@
 using namespace std;
 
 __global__
-void init(meshgrid_t* m, data_t zeta, data_t R, data_t M)
+void init(dev_meshgrid_t* m, data_t zeta, data_t R, data_t M)
 {
   int i = blockIdx.x*blockDim.x+threadIdx.x;
   int j = blockIdx.y*blockDim.y+threadIdx.y;
+
+  if (i>m->size_i-1 || j>m->size_j-1) return;
 
   m->dat(i, j).vr = 0;
   m->dat(i, j).vz = 0;
@@ -21,7 +23,6 @@ void init(meshgrid_t* m, data_t zeta, data_t R, data_t M)
 
 int main(int argc, char **argv)
 {
-  cout << argc << endl;
   data_t t0 = atof(argv[1]),
          v0 = atof(argv[2]),
          D = atof(argv[3]),
@@ -53,8 +54,7 @@ int main(int argc, char **argv)
       cout << m1.cat(i, j).rho << " ";
     cout << endl;
   }
-  meshgrid_t * dm1 = m1.meshgrid_to_device();
-  init<<<gridsize, blocksize>>>(dm1, Flow.get_zeta(), R, M);
+  init<<<gridsize, blocksize>>>(m1.d_m, Flow.get_zeta(), R, M);
   m1.data_to_host();
   for (int j=0; j<size_j; j++)
   {
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
   return 0;
 
 //  RK45Solver_t<Flow_t, meshgrid_t, data_t> Solver(Flow, dt, 10);
-  for (data_t t=0; t<t_tot; t+=dt)
-    cout << t << endl;
+//  for (data_t t=0; t<t_tot; t+=dt)
+//    cout << t << endl;
 };
 
