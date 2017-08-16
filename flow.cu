@@ -1,4 +1,6 @@
 #include "meshgrid.cu"
+#include <iostream>
+using namespace std;
 
 class Flow_t
 {
@@ -32,77 +34,14 @@ class Flow_t
 		__host__ __device__
     inline data_t get_zeta() const { return zeta; }
 
-		__host__ __device__
-    inline const meshgrid_t& get_in() const { return in; }
-		__host__ __device__
-    inline meshgrid_t& get_out() { return out; }
-
-//    //----- dr -----
-//    __host__ __device__
-//    data_t dr_vr(int i, int j) const;
-//    __host__ __device__
-//    data_t dr_vz(int i, int j) const;
-//    __host__ __device__
-//    data_t dr_rho(int i, int j) const;
-//    __host__ __device__
-//    data_t dr_P(int i, int j) const;
-//    __host__ __device__
-//    data_t dr_T(int i, int j) const;
-//    //----- dz -----
-//    __host__ __device__
-//    data_t dz_vr(int i, int j) const;
-//    __host__ __device__
-//    data_t dz_vz(int i, int j) const;
-//    __host__ __device__
-//    data_t dz_rho(int i, int j) const;
-//    __host__ __device__
-//    data_t dz_P(int i, int j) const;
-//    __host__ __device__
-//    data_t dz_T(int i, int j) const;
-//       
-//    //----- d2r -----
-//    __host__ __device__
-//    data_t d2r_vr(int i, int j) const;
-//    __host__ __device__
-//    data_t d2r_vz(int i, int j) const;
-//    __host__ __device__
-//    data_t d2r_T(int i, int j) const;
-//    __host__ __device__
-//    data_t d2r_P(int i, int j) const;
-//    __host__ __device__
-//    data_t d2z_vr(int i, int j) const;
-//    __host__ __device__
-//    data_t d2z_vz(int i, int j) const;
-//    __host__ __device__
-//    data_t d2z_T(int i, int j) const;
-//    __host__ __device__
-//    data_t d2z_P(int i, int j) const;
-//
-//    __host__ __device__
-//    data_t vgrad_vr(int i, int j) const;
-//    __host__ __device__
-//    data_t vgrad_vz(int i, int j) const;
-//    __host__ __device__
-//    data_t vgrad_P(int i, int j) const;
-//    __host__ __device__
-//    data_t vgrad_T(int i, int j) const;
-//    __host__ __device__
-//    data_t lapsca_P(int i, int j) const;
-//    __host__ __device__
-//    data_t lapsca_T(int i, int j) const;
-//    __host__ __device__
-//    data_t lapvec_vr(int i, int j) const;
-//    __host__ __device__
-//    data_t lapvec_vz(int i, int j) const;
-
   private:
     data_t t0, v0, D, rho0, P0, T0, 
            eta, lambda,
            R, M, C, 
            alpha, beta, gamma, 
            delta, epsilon, zeta;
-    meshgrid_t in, out;
     dim3 gridsize, blocksize;
+    meshgrid_t out;
 };
 
 //----- dr -----
@@ -525,9 +464,9 @@ void one_step(dev_meshgrid_t *out, dev_meshgrid_t *in,
   int i = blockIdx.x*blockDim.x+threadIdx.x;
   int j = blockIdx.y*blockDim.y+threadIdx.y;
 
-  if (i>in->size_i || j>in->size_j) return;
+  if (i>in->size_i-1 || j>in->size_j-1) return;
 
-  cell_t& out_c = in->dat(i, j);
+  cell_t& out_c = out->dat(i, j);
   const cell_t& in_c = in->cdat(i, j);
 
   data_t rmc = R/(M*C),
@@ -541,16 +480,19 @@ void one_step(dev_meshgrid_t *out, dev_meshgrid_t *in,
            + beta * eta / in_c.rho * lapvec_vz(in, i, j)
            - gamma / in_c.rho * dz_P(in, i, j);
 
-  out_c.rho = alpha * ( in_c.rho * in_c.vr * ( (data_t) in->size_j/j )
-            + in_c.vr * dr_rho(in, i, j) + in_c.rho * dr_vr(in, i, j)
-            + in_c.vz * dz_rho(in, i, j) + in_c.rho * dz_vz(in, i, j) );
+  out_c.rho = alpha * ( in_c.vr * dr_rho(in, i, j) + in_c.rho * dr_vr(in, i, j) +
+                        in_c.vz * dz_rho(in, i, j) + in_c.rho * dz_vz(in, i, j) );
+  if (j>0) out_c.rho += alpha * in_c.rho * in_c.vr * ( (data_t) in->size_j/j );
   
   out_c.T = inv_rmc * rmc * out_c.rho 
           + delta * inv_rmc * eta * ( lapvec_vr(in, i, j) * in_c.vr + lapvec_vz(in, i, j) * in_c.vz )
           + epsilon * inv_rmc * lambda * lapsca_T(in, i, j); 
 
   out_c.P = zeta * R / M * ( out_c.rho * in_c.T + out_c.T * in_c.rho ) ;
+
+//  printf("%d %d %f %f %f %f %f\n", i, j, out_c.vr, out_c.vz, out_c.rho, out_c.T, out_c.P);
 };
+
 
 
 //----- FLOW ------
@@ -571,12 +513,41 @@ Flow_t::Flow_t(dim3 _gridsize, dim3 _blocksize,
 
 meshgrid_t Flow_t::operator()(const meshgrid_t& m)
 {
-  out.from_meshgrid_prop(m);
-  in = m;
-  one_step<<<gridsize, blocksize>>>(out.d_m, in.d_m, 
+  out = m;
+//  out.reserve_host_data();
+//  out.data_to_host();
+//  cout << "before\n" << out << endl;
+  one_step<<<gridsize, blocksize>>>(out.d_m, m.d_m, 
                                     alpha, beta, gamma, 
                                     delta, epsilon, zeta,
                                     eta, lambda, 
                                     R, M, C);
+//  out.data_to_host();
+//  cout << "after\n" << out << endl;
   return out;
 }
+  
+  
+
+  
+//__global__
+//void test(const dev_meshgrid_t * in)
+//{
+//  int i = blockIdx.x*blockDim.x+threadIdx.x;
+//  int j = blockIdx.y*blockDim.y+threadIdx.y;
+//
+//  if (i>in->size_i-1 || j>in->size_j-1) return;
+//  printf("%d %d %f %f %f %f %f\n", i, j, in->cdat(i, j).vr, in->cdat(i, j).vz, in->cdat(i, j).rho, in->cdat(i, j).T, in->cdat(i, j).P);
+//}
+//
+//__global__
+//void testbis(const cell_t * in, int size_i, int size_j)
+//{
+//  int i = blockIdx.x*blockDim.x+threadIdx.x;
+//  int j = blockIdx.y*blockDim.y+threadIdx.y;
+//
+//  if (i>size_i-1 || j>size_j-1) return;
+//  printf("%d %d %f %f %f %f %f\n", i, j, in[j*size_i+i].vr, in[j*size_i+i].vz, in[j*size_i+i].rho, in[j*size_i+i].T, in[j*size_i+i].P);
+//}
+
+

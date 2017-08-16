@@ -1,4 +1,6 @@
 #include "flow.cu"
+#define CUDA_CALLABLE_MEMBER_OVERWRITE
+#define CUDA_CALLABLE_MEMBER
 #include "../Solver/solver.cu"
 #include <iostream>
 #include <stdio.h>
@@ -16,9 +18,15 @@ void init(dev_meshgrid_t* m, data_t zeta, data_t R, data_t M)
 
   m->dat(i, j).vr = 0;
   m->dat(i, j).vz = 0;
-  m->dat(i, j).rho = 1;
+  m->dat(i, j).rho = 10; //-9*sqrtf( powf( (data_t)i/m->size_i, 2) + powf( (data_t)j/m->size_j, 2));
   m->dat(i, j).T = 1;
   m->dat(i, j).P = zeta * R / M * m->dat(i, j).rho * m->dat(i, j).T; 
+}
+
+meshgrid_t test(meshgrid_t m)
+{
+  printf("lcl %p %p %p\n", &m, m.d_data, m.h_data); 
+  return m;
 }
 
 int main(int argc, char **argv)
@@ -45,27 +53,32 @@ int main(int argc, char **argv)
               t0, v0, D, rho0, P0, T0, 
               eta, lambda, R, M, C); 
 
-  meshgrid_t m1(size_i, size_j, gridsize, blocksize), 
+  meshgrid_t m1(size_i, size_j, gridsize, blocksize),
              m2(size_i, size_j, gridsize, blocksize);
-  m1.data_to_host();
-  for (int j=0; j<size_j; j++)
-  {
-    for (int i=0; i<size_i; i++)
-      cout << m1.cat(i, j).rho << " ";
-    cout << endl;
-  }
+  m1.reserve_host_data();
+  m2.reserve_host_data();
+
   init<<<gridsize, blocksize>>>(m1.d_m, Flow.get_zeta(), R, M);
   m1.data_to_host();
-  for (int j=0; j<size_j; j++)
-  {
-    for (int i=0; i<size_i; i++)
-      cout << m1.cat(i, j).rho << " ";
-    cout << endl;
-  }
-  return 0;
+//  cout << m1 << endl;
 
-//  RK45Solver_t<Flow_t, meshgrid_t, data_t> Solver(Flow, dt, 10);
-//  for (data_t t=0; t<t_tot; t+=dt)
-//    cout << t << endl;
+ 
+  RK45Solver_t<Flow_t, meshgrid_t, data_t> Solver(Flow, 0, 1);
+  for (data_t t=0; t<t_tot; t+=2*dt)
+  {
+    m1.data_to_host();
+    for (int j=0; j<size_j; j++)
+    {
+      for (int i=0; i<size_i; i++)
+        cout << t << " " << i << " " << j << " " 
+             << m1.cat(i, j).vr << " " << m1.cat(i, j).vz << " " << m1.cat(i, j).rho << " " << m1.cat(i, j).T << " " << m1.cat(i, j).P << endl;
+      cout << endl;
+    }
+    cout << endl ;
+    Solver(dt, 1, m1, m2);
+    Solver(dt, 1, m2, m1);
+  }
+
+  return 0;
 };
 
