@@ -194,7 +194,7 @@ data_t dz_rho(const dev_meshgrid_t *in, int i, int j)
   else
   {
     if (in->cdat(i+1, j).is_wall) return 0; 
-    else rv = in->cdat(i+1, j).vz;
+    else rv = in->cdat(i+1, j).rho;
   }
   return in->size_i*(rv-lv)/2;
 }
@@ -494,8 +494,8 @@ void one_step(dev_meshgrid_t *out, const dev_meshgrid_t *in,
 
 //  printf("%d %d out %f %f %f %f %f\n", i, j, 
 //         out_c.vr, out_c.vz, out_c.rho, out_c.T, out_c.P);
-//  if (i==0 && j==in->size_j-1)
-//  {
+  if (i>in->size_i-3 && j==0)
+  {
 //    printf("%d %d (i+1,j) %f %f %f %f %f\n", i, j, 
 //            in->cdat(i+1,j).vr, in->cdat(i+1,j).vz, in->cdat(i+1,j).rho, in->cdat(i+1,j).T, in->cdat(i+1,j).P);
 //    printf("%d %d (i-1,j) %f %f %f %f %f\n", i, j, 
@@ -510,8 +510,10 @@ void one_step(dev_meshgrid_t *out, const dev_meshgrid_t *in,
 //    printf("%d %d out %f %f %f %f %f\n", i, j, 
 //           dr_vr(in ,i, j), dr_vz(in, i, j), dz_vr(in, i, j), dz_vz(in, i, j));
 //    printf("%d %d out %f %f %f %f %f\n", i, j, 
+//           dz_vr(in, i, j), dz_vz(in, i, j), dz_rho(in, i, j), dz_T(in, i, j), dz_P(in, i, j));
+//    printf("%d %d out %f %f %f %f %f\n", i, j, 
 //           out_c.vr, out_c.vz, out_c.rho, out_c.T, out_c.P);
-//  }
+  }
 };
 
 

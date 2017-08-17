@@ -3,6 +3,7 @@
 #define CUDA_CALLABLE_MEMBER
 #include "../Solver/solver.cu"
 #include <iostream>
+#include <iomanip>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -18,7 +19,7 @@ void init(dev_meshgrid_t* m, data_t zeta, data_t R, data_t M)
 
   m->dat(i, j).vr = 0;
   m->dat(i, j).vz = 0;
-  m->dat(i, j).rho = 10-9*(data_t) i/m->size_i; //-9*sqrtf( powf( (data_t)i/m->size_i, 2) + powf( (data_t)j/m->size_j, 2));
+  m->dat(i, j).rho = 10-(data_t) i/m->size_i; //-9*sqrtf( powf( (data_t)i/m->size_i, 2) + powf( (data_t)j/m->size_j, 2));
   m->dat(i, j).T = 1;
   m->dat(i, j).P = zeta * R / M * m->dat(i, j).rho * m->dat(i, j).T; 
   m->dat(i, j).is_wall = false;
@@ -53,6 +54,13 @@ int main(int argc, char **argv)
   Flow_t Flow(gridsize,blocksize, 
               t0, v0, D, rho0, P0, T0, 
               eta, lambda, R, M, C); 
+  cout << Flow.get_alpha() 
+       << " " << Flow.get_beta()
+       << " " << Flow.get_gamma()
+       << " " << Flow.get_delta()
+       << " " << Flow.get_epsilon()
+       << " " << Flow.get_zeta()
+       << endl;
 
   meshgrid_t m1(size_i, size_j, gridsize, blocksize),
              m2(size_i, size_j, gridsize, blocksize);
@@ -71,13 +79,18 @@ int main(int argc, char **argv)
   for (data_t t=0; t<t_tot; t+=2*dt)
   {
     m1.data_to_host();
-    for (int j=0; j<size_j; j++)
-    {
+//    for (int j=0; j<size_j; j++)
+//    {
       for (int i=0; i<size_i; i++)
-        cout << t << " " << i << " " << j << " " 
-             << m1.cat(i, j).vr << " " << m1.cat(i, j).vz << " " << m1.cat(i, j).rho << " " << m1.cat(i, j).T << " " << m1.cat(i, j).P << endl;
+        cout << t << setw(15) << setprecision(7) << i << setw(15) << setprecision(7) << 0 
+             << setw(15) << setprecision(7) << m1.cat(i, 0).vr 
+             << setw(15) << setprecision(7) << m1.cat(i, 0).vz 
+             << setw(15) << setprecision(7) << m1.cat(i, 0).rho 
+             << setw(15) << setprecision(7) << m1.cat(i, 0).T 
+             << setw(15) << setprecision(7) << m1.cat(i, 0).P 
+             << endl;
       cout << endl;
-    }
+//    }
     cout << endl ;
     Solver(dt, 1, m1, m2);
     Solver(dt, 1, m2, m1);
