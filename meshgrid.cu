@@ -14,8 +14,12 @@ using namespace std;
 
 struct cell_t
 {
-  data_t vr, vz, P, rho, T;
-  bool is_wall;
+  data_t vr = 0, 
+         vz = 0, 
+         P = 0, 
+         rho = 0, 
+         T = 0;
+  bool is_wall = false;
 
   __host__ __device__
   cell_t(data_t _vr, data_t _vz, data_t _P, data_t _rho, data_t _T, bool _is_wall) : vr(_vr), vz(_vz), P(_P), rho(_rho), T(_T), is_wall(_is_wall) {}

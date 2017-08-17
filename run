@@ -11,9 +11,9 @@ lambda=0.01
 R=8.314
 M=20
 C=2
-dt=1
-t_tot=100
-size_i=50
-size_j=50
+dt=0.005
+t_tot=1
+size_i=500
+size_j=500
 
 optirun ./main $t0 $v0 $D $rho0 $P0 $T0 $eta $lambda $R $M $C $dt $t_tot $size_i $size_j 

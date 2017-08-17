@@ -18,9 +18,10 @@ void init(dev_meshgrid_t* m, data_t zeta, data_t R, data_t M)
 
   m->dat(i, j).vr = 0;
   m->dat(i, j).vz = 0;
-  m->dat(i, j).rho = 10; //-9*sqrtf( powf( (data_t)i/m->size_i, 2) + powf( (data_t)j/m->size_j, 2));
+  m->dat(i, j).rho = 10-9*(data_t) i/m->size_i; //-9*sqrtf( powf( (data_t)i/m->size_i, 2) + powf( (data_t)j/m->size_j, 2));
   m->dat(i, j).T = 1;
   m->dat(i, j).P = zeta * R / M * m->dat(i, j).rho * m->dat(i, j).T; 
+  m->dat(i, j).is_wall = false;
 }
 
 meshgrid_t test(meshgrid_t m)
@@ -64,6 +65,9 @@ int main(int argc, char **argv)
 
  
   RK45Solver_t<Flow_t, meshgrid_t, data_t> Solver(Flow, 0, 1);
+
+//  Solver(dt, 1, m1, m2);
+//  Solver(dt, 1, m2, m1);
   for (data_t t=0; t<t_tot; t+=2*dt)
   {
     m1.data_to_host();

@@ -46,7 +46,7 @@ class Flow_t
 
 //----- dr -----
 __device__
-data_t dr_vr(dev_meshgrid_t *in, int i, int j) 
+data_t dr_vr(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t tv, bv;
   if (j==0) return 0;
@@ -55,7 +55,7 @@ data_t dr_vr(dev_meshgrid_t *in, int i, int j)
     if (in->cdat(i, j-1).is_wall) bv = 0;
     else bv = in->cdat(i, j-1).vr;
   }
-  if (j==in->size_j-1) tv = 0;
+  if (j==in->size_j-1) tv = in->cdat(i, j).vr;
   else
   {
     if (in->cdat(i, j+1).is_wall) tv = 0;
@@ -65,7 +65,7 @@ data_t dr_vr(dev_meshgrid_t *in, int i, int j)
 }
 
 __device__
-data_t dr_vz(dev_meshgrid_t *in, int i, int j) 
+data_t dr_vz(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t tv, bv;
   if (j==0) return 0;
@@ -74,7 +74,7 @@ data_t dr_vz(dev_meshgrid_t *in, int i, int j)
     if (in->cdat(i, j-1).is_wall) bv = 0;
     else bv = in->cdat(i, j-1).vz;
   }
-  if (j==in->size_j-1) tv = 0;
+  if (j==in->size_j-1) tv = in->cdat(i, j).vz;
   else
   {
     if (in->cdat(i, j+1).is_wall) tv = 0;
@@ -84,7 +84,7 @@ data_t dr_vz(dev_meshgrid_t *in, int i, int j)
 }
 
 __device__
-data_t dr_rho(dev_meshgrid_t *in, int i, int j) 
+data_t dr_rho(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t tv, bv;
   if (j==0) return 0;
@@ -93,7 +93,7 @@ data_t dr_rho(dev_meshgrid_t *in, int i, int j)
     if (in->cdat(i, j-1).is_wall) return 0;
     else bv = in->cdat(i, j-1).rho;
   }
-  if (j==in->size_j-1) tv = 0;
+  if (j==in->size_j-1) tv = in->cdat(i, j).rho;
   else
   {
     if (in->cdat(i, j+1).is_wall) return 0;
@@ -103,7 +103,7 @@ data_t dr_rho(dev_meshgrid_t *in, int i, int j)
 }
 
 __device__
-data_t dr_P(dev_meshgrid_t *in, int i, int j) 
+data_t dr_P(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t tv, bv;
   if (j==0) return 0;
@@ -112,7 +112,7 @@ data_t dr_P(dev_meshgrid_t *in, int i, int j)
     if (in->cdat(i, j-1).is_wall) return 0;
     else bv = in->cdat(i, j-1).P;
   }
-  if (j==in->size_j-1) tv = 0;
+  if (j==in->size_j-1) tv = in->cdat(i, j).P;
   else
   {
     if (in->cdat(i, j+1).is_wall) return 0;
@@ -122,7 +122,7 @@ data_t dr_P(dev_meshgrid_t *in, int i, int j)
 }
 
 __device__
-data_t dr_T(dev_meshgrid_t *in, int i, int j) 
+data_t dr_T(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t tv, bv;
   if (j==0) return 0;
@@ -131,7 +131,7 @@ data_t dr_T(dev_meshgrid_t *in, int i, int j)
     if (in->cdat(i, j-1).is_wall) return 0;
     else bv = in->cdat(i, j-1).T;
   }
-  if (j==in->size_j-1) tv = 0;
+  if (j==in->size_j-1) tv = in->cdat(i, j).T;
   else
   {
     if (in->cdat(i, j+1).is_wall) return 0;
@@ -143,16 +143,16 @@ data_t dr_T(dev_meshgrid_t *in, int i, int j)
 //----- dz -----
 
 __device__
-data_t dz_vr(dev_meshgrid_t *in, int i, int j) 
+data_t dz_vr(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t lv, rv;
-  if (i==0) lv = 0;
+  if (i==0) return 0;
   else
   {
     if (in->cdat(i-1, j).is_wall) lv = 0;
     else lv = in->cdat(i-1, j).vr;
   }
-  if (i==in->size_i-1) rv = 0;
+  if (i==in->size_i-1) rv = in->cdat(i, j).vr;
   else
   {
     if (in->cdat(i+1, j).is_wall) rv = 0;
@@ -162,16 +162,16 @@ data_t dz_vr(dev_meshgrid_t *in, int i, int j)
 }
     
 __device__
-data_t dz_vz(dev_meshgrid_t *in, int i, int j) 
+data_t dz_vz(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t lv, rv;
-  if (i==0) lv = 0;
+  if (i==0) return 0;
   else
   {
     if (in->cdat(i-1, j).is_wall) lv = 0;
     else lv = in->cdat(i-1, j).vz;
   }
-  if (i==in->size_i-1) rv = 0;
+  if (i==in->size_i-1) rv = in->cdat(i, j).vz;
   else
   {
     if (in->cdat(i+1, j).is_wall) rv = 0;
@@ -181,16 +181,16 @@ data_t dz_vz(dev_meshgrid_t *in, int i, int j)
 }
     
 __device__
-data_t dz_rho(dev_meshgrid_t *in, int i, int j) 
+data_t dz_rho(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t lv, rv;
-  if (i==0) lv = 0;
+  if (i==0) return 0;
   else
   {
     if (in->cdat(i-1, j).is_wall) return 0; 
     else lv = in->cdat(i-1, j).rho;
   }
-  if (i==in->size_i-1) rv = 0;
+  if (i==in->size_i-1) rv = in->cdat(i, j).rho;
   else
   {
     if (in->cdat(i+1, j).is_wall) return 0; 
@@ -200,35 +200,35 @@ data_t dz_rho(dev_meshgrid_t *in, int i, int j)
 }
     
 __device__
-data_t dz_P(dev_meshgrid_t *in, int i, int j) 
+data_t dz_P(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t lv, rv;
-  if (i==0) lv = 0;
+  if (i==0) return 0;
   else
   {
     if (in->cdat(i-1, j).is_wall) return 0;
-    else lv = in->cdat(i-1, j).vz;
+    else lv = in->cdat(i-1, j).P;
   }
-  if (i==in->size_i-1) rv = 0;
+  if (i==in->size_i-1) rv = in->cdat(i, j).P;
   else
   {
     if (in->cdat(i+1, j).is_wall) return 0;
-    else rv = in->cdat(i+1, j).vz;
+    else rv = in->cdat(i+1, j).P;
   }
   return in->size_i*(rv-lv)/2;
 }
     
 __device__
-data_t dz_T(dev_meshgrid_t *in, int i, int j) 
+data_t dz_T(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t lv, rv;
-  if (i==0) lv = 0;
+  if (i==0) return 0;
   else
   {
     if (in->cdat(i-1, j).is_wall) return 0;
     else lv = in->cdat(i-1, j).vz;
   }
-  if (i==in->size_i-1) rv = 0;
+  if (i==in->size_i-1) rv = in->cdat(i, j).T;
   else
   {
     if (in->cdat(i+1, j).is_wall) return 0;
@@ -240,7 +240,7 @@ data_t dz_T(dev_meshgrid_t *in, int i, int j)
 //----- d2r -----
 
 __device__
-data_t d2r_vr(dev_meshgrid_t *in, int i, int j) 
+data_t d2r_vr(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t tv, bv;
   if (j==0) bv=in->cdat(i,j).vr;
@@ -259,7 +259,7 @@ data_t d2r_vr(dev_meshgrid_t *in, int i, int j)
 }
 
 __device__
-data_t d2r_vz(dev_meshgrid_t *in, int i, int j) 
+data_t d2r_vz(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t tv, bv;
   if (j==0) bv=in->cdat(i,j).vz;
@@ -278,26 +278,26 @@ data_t d2r_vz(dev_meshgrid_t *in, int i, int j)
 }
 
 __device__
-data_t d2r_T(dev_meshgrid_t *in, int i, int j) 
+data_t d2r_T(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t tv, bv;
   if (j==0) bv=in->cdat(i,j).T;
   else
   {
     if (in->cdat(i, j-1).is_wall) bv = in->cdat(i,j).T;
-    else bv = in->cdat(i, j-1).vz;
+    else bv = in->cdat(i, j-1).T;
   }
   if (j==in->size_j-1) tv = in->cdat(i,j).T;
   else
   {
     if (in->cdat(i, j+1).is_wall) tv = in->cdat(i,j).T;
-    else tv = in->cdat(i, j+1).vz;
+    else tv = in->cdat(i, j+1).T;
   }
   return in->size_j*(tv+bv-2*in->cdat(i,j).T);
 }
 
 __device__
-data_t d2r_P(dev_meshgrid_t *in, int i, int j) 
+data_t d2r_P(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t tv, bv;
   if (j==0) bv=in->cdat(i,j).P;
@@ -310,13 +310,13 @@ data_t d2r_P(dev_meshgrid_t *in, int i, int j)
   else
   {
     if (in->cdat(i, j+1).is_wall) tv = in->cdat(i,j).P;
-    else tv = in->cdat(i, j+1).vz;
+    else tv = in->cdat(i, j+1).P;
   }
   return in->size_j*(tv+bv-2*in->cdat(i,j).P);
 }
 
 __device__
-data_t d2z_vr(dev_meshgrid_t *in, int i, int j) 
+data_t d2z_vr(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t rv, lv;
   if (i==0) lv=in->cdat(i,j).vr;
@@ -335,7 +335,7 @@ data_t d2z_vr(dev_meshgrid_t *in, int i, int j)
 }
 
 __device__
-data_t d2z_vz(dev_meshgrid_t *in, int i, int j) 
+data_t d2z_vz(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t rv, lv;
   if (i==0) lv=in->cdat(i,j).vz;
@@ -354,38 +354,38 @@ data_t d2z_vz(dev_meshgrid_t *in, int i, int j)
 }
 
 __device__
-data_t d2z_T(dev_meshgrid_t *in, int i, int j) 
+data_t d2z_T(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t rv, lv;
   if (i==0) lv=in->cdat(i,j).T;
   else
   {
-    if (in->cdat(i-1, j).is_wall) lv = 0;
+    if (in->cdat(i-1, j).is_wall) lv = in->cdat(i,j).T;
     else lv = in->cdat(i-1, j).T;
   }
   if (i==in->size_i-1) rv = in->cdat(i,j).T;
   else
   {
-    if (in->cdat(i+1, j).is_wall) rv = 0;
+    if (in->cdat(i+1, j).is_wall) rv = in->cdat(i,j).T;
     else rv = in->cdat(i+1, j).T;
   }
   return in->size_j*(rv+lv-2*in->cdat(i,j).T);
 }
 
 __device__
-data_t d2z_P(dev_meshgrid_t *in, int i, int j) 
+data_t d2z_P(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t rv, lv;
-  if (i==0) lv=in->cdat(i,j).vz;
+  if (i==0) lv=in->cdat(i,j).P;
   else
   {
-    if (in->cdat(i-1, j).is_wall) lv = 0;
+    if (in->cdat(i-1, j).is_wall) lv = in->cdat(i,j).P;
     else lv = in->cdat(i-1, j).P;
   }
   if (i==in->size_i-1) rv = in->cdat(i,j).P;
   else
   {
-    if (in->cdat(i+1, j).is_wall) rv = 0;
+    if (in->cdat(i+1, j).is_wall) rv = in->cdat(i,j).P;
     else rv = in->cdat(i+1, j).P;
   }
   return in->size_j*(rv+lv-2*in->cdat(i,j).P);
@@ -393,35 +393,35 @@ data_t d2z_P(dev_meshgrid_t *in, int i, int j)
 
 
 __device__
-data_t vgrad_vr(dev_meshgrid_t *in, int i, int j) 
+data_t vgrad_vr(const dev_meshgrid_t *in, int i, int j) 
 {
   return in->cdat(i,j).vr * dr_vr(in, i, j) 
        + in->cdat(i,j).vz * dz_vr(in, i, j) ;
 }
 
 __device__
-data_t vgrad_vz(dev_meshgrid_t *in, int i, int j) 
+data_t vgrad_vz(const dev_meshgrid_t *in, int i, int j) 
 {
   return in->cdat(i,j).vr * dr_vz(in, i, j) 
        + in->cdat(i,j).vz * dz_vz(in, i, j) ;
 }
 
 __device__
-data_t vgrad_P(dev_meshgrid_t *in, int i, int j) 
+data_t vgrad_P(const dev_meshgrid_t *in, int i, int j) 
 {
   return in->cdat(i,j).vr * dr_P(in, i, j) 
        + in->cdat(i,j).vz * dz_P(in, i, j) ;
 }
 
 __device__
-data_t vgrad_T(dev_meshgrid_t *in, int i, int j) 
+data_t vgrad_T(const dev_meshgrid_t *in, int i, int j) 
 {
   return in->cdat(i,j).vr * dr_T(in, i, j) 
        + in->cdat(i,j).vz * dz_T(in, i, j) ;
 }
 
 __device__
-data_t lapsca_P(dev_meshgrid_t *in, int i, int j) 
+data_t lapsca_P(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t val = d2r_P(in, i, j) + d2z_P(in, i, j);
   if (j>0) val += (data_t) in->size_j/j * dr_P(in, i, j);
@@ -429,7 +429,7 @@ data_t lapsca_P(dev_meshgrid_t *in, int i, int j)
 }
 
 __device__
-data_t lapsca_T(dev_meshgrid_t *in, int i, int j) 
+data_t lapsca_T(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t val = d2r_T(in, i, j) + d2z_T(in, i, j);
   if (j>0) val += (data_t) in->size_j/j * dr_T(in, i, j);
@@ -437,7 +437,7 @@ data_t lapsca_T(dev_meshgrid_t *in, int i, int j)
 }
 
 __device__
-data_t lapvec_vr(dev_meshgrid_t *in, int i, int j) 
+data_t lapvec_vr(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t val = d2r_vr(in, i, j) + d2z_vr(in, i, j);
   if (j>0) val += (data_t) in->size_j/j * dr_vr(in, i, j) - 
@@ -446,7 +446,7 @@ data_t lapvec_vr(dev_meshgrid_t *in, int i, int j)
 }
 
 __device__
-data_t lapvec_vz(dev_meshgrid_t *in, int i, int j) 
+data_t lapvec_vz(const dev_meshgrid_t *in, int i, int j) 
 {
   data_t val = d2r_vz(in, i, j) + d2z_vz(in, i, j);
   if (j>0) val += (data_t) in->size_j/j * dr_vz(in, i, j);
@@ -455,11 +455,11 @@ data_t lapvec_vz(dev_meshgrid_t *in, int i, int j)
 
 //----- update -----
 __global__ 
-void one_step(dev_meshgrid_t *out, dev_meshgrid_t *in, 
-              data_t alpha, data_t beta, data_t gamma, 
-              data_t delta, data_t epsilon, data_t zeta,
-              data_t eta, data_t lambda, 
-              data_t R, data_t M, data_t C)
+void one_step(dev_meshgrid_t *out, const dev_meshgrid_t *in, 
+              const data_t alpha, const data_t beta, const data_t gamma, 
+              const data_t delta, const data_t epsilon, const data_t zeta,
+              const data_t eta, const data_t lambda, 
+              const data_t R, const data_t M, const data_t C)
 {
   int i = blockIdx.x*blockDim.x+threadIdx.x;
   int j = blockIdx.y*blockDim.y+threadIdx.y;
@@ -468,6 +468,8 @@ void one_step(dev_meshgrid_t *out, dev_meshgrid_t *in,
 
   cell_t& out_c = out->dat(i, j);
   const cell_t& in_c = in->cdat(i, j);
+
+  if (in_c.is_wall) return;
 
   data_t rmc = R/(M*C),
          inv_rmc = 1./(1-rmc);
@@ -490,7 +492,26 @@ void one_step(dev_meshgrid_t *out, dev_meshgrid_t *in,
 
   out_c.P = zeta * R / M * ( out_c.rho * in_c.T + out_c.T * in_c.rho ) ;
 
-//  printf("%d %d %f %f %f %f %f\n", i, j, out_c.vr, out_c.vz, out_c.rho, out_c.T, out_c.P);
+//  printf("%d %d out %f %f %f %f %f\n", i, j, 
+//         out_c.vr, out_c.vz, out_c.rho, out_c.T, out_c.P);
+//  if (i==0 && j==in->size_j-1)
+//  {
+//    printf("%d %d (i+1,j) %f %f %f %f %f\n", i, j, 
+//            in->cdat(i+1,j).vr, in->cdat(i+1,j).vz, in->cdat(i+1,j).rho, in->cdat(i+1,j).T, in->cdat(i+1,j).P);
+//    printf("%d %d (i-1,j) %f %f %f %f %f\n", i, j, 
+//            in->cdat(i-1,j).vr, in->cdat(i-1,j).vz, in->cdat(i-1,j).rho, in->cdat(i-1,j).T, in->cdat(i-1,j).P);
+//    printf("%d %d (i,j) %f %f %f %f %f\n", i, j, 
+//            in->cdat(i,j).vr, in->cdat(i,j).vz, in->cdat(i,j).rho, in->cdat(i,j).T, in->cdat(i,j).P);
+//    printf("%d %d (i,j+1) %f %f %f %f %f\n", i, j, 
+//            in->cdat(i,j+1).vr, in->cdat(i,j+1).vz, in->cdat(i,j+1).rho, in->cdat(i,j+1).T, in->cdat(i,j+1).P);
+//    printf("%d %d (i,j-1) %f %f %f %f %f\n", i, j, 
+//            in->cdat(i,j-1).vr, in->cdat(i,j-1).vz, in->cdat(i,j-1).rho, in->cdat(i,j-1).T, in->cdat(i,j-1).P);
+//    printf("%d %d calc %f %f %f\n", i, j, gamma , in_c.rho , dz_P(in, i, j));
+//    printf("%d %d out %f %f %f %f %f\n", i, j, 
+//           dr_vr(in ,i, j), dr_vz(in, i, j), dz_vr(in, i, j), dz_vz(in, i, j));
+//    printf("%d %d out %f %f %f %f %f\n", i, j, 
+//           out_c.vr, out_c.vz, out_c.rho, out_c.T, out_c.P);
+//  }
 };
 
 
@@ -514,16 +535,11 @@ Flow_t::Flow_t(dim3 _gridsize, dim3 _blocksize,
 meshgrid_t Flow_t::operator()(const meshgrid_t& m)
 {
   out = m;
-//  out.reserve_host_data();
-//  out.data_to_host();
-//  cout << "before\n" << out << endl;
   one_step<<<gridsize, blocksize>>>(out.d_m, m.d_m, 
                                     alpha, beta, gamma, 
                                     delta, epsilon, zeta,
                                     eta, lambda, 
                                     R, M, C);
-//  out.data_to_host();
-//  cout << "after\n" << out << endl;
   return out;
 }
   
