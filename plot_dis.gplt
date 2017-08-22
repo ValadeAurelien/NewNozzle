@@ -1,0 +1,12 @@
+max = 0.061
+min = 0.051
+nbstep = 10
+calcstep = 1e-5
+xmin = 300
+xmax = 350
+##########
+seg = (max-min)/nbstep
+tol = calcstep
+#set xrange [xmin:xmax]
+
+plot for [i=0:nbstep] "log" using (abs($1-(i*seg+min))<tol ? $2 : 1/0):6 ls (i+1) w l t sprintf("%.3f", (i*seg+min))

@@ -1,19 +1,19 @@
 #! /bin/sh
 
-t0=0.1
-v0=1
+t0=0.001
+v0=10
 D=1
-rho0=1000
-P0=10000
+rho0=0.5
+P0=100000
 T0=270
 eta=1e-5
 lambda=0.01
 R=8.314
 M=20
 C=2
-dt=0.001
-t_tot=1
-size_i=50
+dt=1e-4
+t_tot=.1
+size_i=500
 size_j=50
 
 optirun ./main $t0 $v0 $D $rho0 $P0 $T0 $eta $lambda $R $M $C $dt $t_tot $size_i $size_j 

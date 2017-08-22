@@ -8,8 +8,8 @@
               __FILE__, __LINE__, cudaGetErrorString(err) ); \
        exit(EXIT_FAILURE); }} while (0)
 
-//typedef float data_t;
-typedef double data_t;
+typedef float data_t;
+//typedef double data_t;
 using namespace std; 
 
 struct cell_t
@@ -22,16 +22,41 @@ struct cell_t
   bool is_wall = false;
 
   __host__ __device__
-  cell_t(data_t _vr, data_t _vz, data_t _P, data_t _rho, data_t _T, bool _is_wall) : vr(_vr), vz(_vz), P(_P), rho(_rho), T(_T), is_wall(_is_wall) {}
-
+  cell_t operator+(const cell_t& c) const 
+  { 
+    cell_t d;
+    d.vr=vr+c.vr; d.vz=vz+c.vz;
+    d.P=P+c.P; d.rho=rho+c.rho;
+    d.T=T+c.T; d.is_wall=is_wall; 
+    return d;
+  }
   __host__ __device__
-  cell_t operator+(const cell_t& c) { return cell_t(vr+c.vr, vz+c.vz, P+c.P, rho+c.rho, T+c.T, is_wall); }
+  cell_t operator-(const cell_t& c) const
+  { 
+    cell_t d;
+    d.vr=vr+c.vr; d.vz=vz+c.vz;
+    d.P=P+c.P; d.rho=rho+c.rho;
+    d.T=T+c.T; d.is_wall=is_wall; 
+    return d;
+  }
   __host__ __device__
-  cell_t operator-(const cell_t& c) { return cell_t(vr-c.vr, vz-c.vz, P-c.P, rho-c.rho, T-c.T, is_wall); }
+  cell_t operator*(const data_t& f) const
+  { 
+    cell_t d;
+    d.vr=vr*f; d.vz=vz*f;
+    d.P=P*f; d.rho=rho*f;
+    d.T=T*f; d.is_wall=is_wall; 
+    return d;
+  }
   __host__ __device__
-  cell_t operator*(const data_t& f) { return cell_t(vr*f, vz*f, P*f, rho*f, T*f, is_wall); }
-  __host__ __device__
-  cell_t operator/(const data_t& f) { return cell_t(vr/f, vz/f, P/f, rho/f, T/f, is_wall); }
+  cell_t operator/(const data_t& f) const
+  { 
+    cell_t d;
+    d.vr=vr/f; d.vz=vz/f;
+    d.P=P/f; d.rho=rho/f;
+    d.T=T/f; d.is_wall=is_wall; 
+    return d;
+  }
 };
 
 __host__
@@ -79,30 +104,52 @@ struct dev_meshgrid_t
 {
   int size_i, size_j;
   cell_t* d_data = NULL;
+  //int zone {IN=0, LEFT=1, BELOW=2, RIGHT=3, ABOVE=4}
 
 //  ~dev_meshgrid_t() {}
 
   __device__ 
-  const cell_t& cdat(int i, int j) const
+  inline cell_t& dat(int i, int j) 
   {
-    if (i<size_i && j<size_j)
-      return d_data[j*size_i+i];
-    else 
+    int zone = (i<0) + 2*(j<0) + 3*(i>size_i-1) + 4*(j>size_j-1);
+    switch (zone)
     {
-      printf("out of range : %d %d\n", i, j);
-      return d_data[0];
+      case 0:
+        return d_data[j*size_i+i];
+      case 1:
+        return d_data[j*size_i];
+      case 2:
+        return d_data[i];
+      case 3:
+        return d_data[j*size_i+size_i-1];
+      case 4:
+        return d_data[(size_j-1)*size_i+i];
+      default:
+        printf("completely outside : %d %d\n", i, j);
+        return d_data[0];
     }
   }
   __device__ 
-  cell_t& dat(int i, int j) 
+  inline const cell_t& cdat(int i, int j) const
   {
-    if (i<size_i && j<size_j)
-      return d_data[j*size_i+i];
-    else 
+    int zone = (i<0) + 2*(j<0) + 3*(i>size_i-1) + 4*(j>size_j-1);
+    switch (zone)
     {
-      printf("out of range : %d %d\n", i, j);
-      return d_data[0];
+      case 0:
+        return d_data[j*size_i+i];
+      case 1:
+        return d_data[j*size_i];
+      case 2:
+        return d_data[i];
+      case 3:
+        return d_data[j*size_i+size_i-1];
+      case 4:
+        return d_data[(size_j-1)*size_i+i];
+      default:
+        printf("completely outside : %d %d\n", i, j);
+        return d_data[0];
     }
+
   }
 };
 
